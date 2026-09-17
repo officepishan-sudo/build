@@ -46,7 +46,7 @@ export function CanvasBoard({
           style={{ transform: `scale(${zoom})`, transformOrigin: "top right" }}
           onClick={handleImageClick}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- כתובת חיצונית חופשית, לא נכס מקומי */}
+          {/* כתובת URL חיצונית חופשית (DEC: אין העלאת קבצים) - לא נכס מקומי של next/image */}
           <img src={imageUrl} alt="תוכנית הפרויקט" className="block max-w-full select-none" draggable={false} />
           {pins.map((pin) => (
             <PinMarker key={pin.id} pin={pin} onClick={() => setPending({ kind: "edit", pin })} />

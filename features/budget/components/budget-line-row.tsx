@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { NeedsCheckBadge } from "@/components/ui/states";
 import { formatCurrency } from "@/lib/format";
-import type { BudgetLineSummary } from "../calc";
+import { varianceTone, type BudgetLineSummary } from "../calc";
 
 export function BudgetLineRow({ projectId, line }: { projectId: string; line: BudgetLineSummary }) {
   return (
@@ -50,10 +50,9 @@ function Cell({ value }: { value: string }) {
 }
 
 function VarianceCell({ line }: { line: BudgetLineSummary }) {
-  const tone = line.variance > 0 ? "danger" : line.variance < 0 ? "success" : "neutral";
   return (
     <div className="space-y-1">
-      <Badge tone={tone}>{formatCurrency(line.variance)}</Badge>
+      <Badge tone={varianceTone(line.variance)}>{formatCurrency(line.variance)}</Badge>
       {line.isOverageUnexplained && <NeedsCheckBadge label="חריגה - דורש הסבר" />}
       {line.varianceReason && <p className="text-[11px] text-gray-400">{line.varianceReason}</p>}
     </div>

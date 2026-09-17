@@ -9,6 +9,7 @@ import {
   hasUnquantifiedPartialPayment,
   sumExpenseAmounts,
   sumPaidAmounts,
+  varianceTone,
 } from "./calc";
 
 describe("computeRemaining", () => {
@@ -133,6 +134,14 @@ describe("buildBudgetLineSummary", () => {
     expect(summary.hasActualYet).toBe(false);
     expect(summary.actual).toBe(0);
     expect(summary.isOverageUnexplained).toBe(false);
+  });
+});
+
+describe("varianceTone", () => {
+  it("מחזירה danger כשיש חריגה, success כשמתחת לתכנון, neutral כשמדויק", () => {
+    expect(varianceTone(50)).toBe("danger");
+    expect(varianceTone(-50)).toBe("success");
+    expect(varianceTone(0)).toBe("neutral");
   });
 });
 

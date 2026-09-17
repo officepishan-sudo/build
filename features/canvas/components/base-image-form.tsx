@@ -41,9 +41,10 @@ export function BaseImageForm({ projectId, currentUrl }: { projectId: string; cu
 
 function SubmitButton({ hasImage }: { hasImage: boolean }) {
   const { pending } = useFormStatus();
+  const idleLabel = hasImage ? "עדכון תמונה" : "הוספת תמונה";
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "שומר..." : hasImage ? "עדכון תמונה" : "הוספת תמונה"}
+      {pending ? "שומר..." : idleLabel}
     </Button>
   );
 }

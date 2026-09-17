@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ConflictBanner, EmptyState, ErrorState } from "@/components/ui/states";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { formatCurrency } from "@/lib/format";
+import { varianceTone } from "../calc";
 import { getBudgetLineDetail } from "../service";
 import { ExpenseList } from "./expense-list";
 import { LogExpenseForm } from "./log-expense-form";
@@ -55,9 +56,7 @@ export async function BudgetLineDetailView({
           <Detail label="תחזית (הערכה בלבד)" value={formatCurrency(summary.forecast)} />
         </dl>
         <div className="mt-3">
-          <Badge tone={summary.variance > 0 ? "danger" : summary.variance < 0 ? "success" : "neutral"}>
-            פער: {formatCurrency(summary.variance)}
-          </Badge>
+          <Badge tone={varianceTone(summary.variance)}>פער: {formatCurrency(summary.variance)}</Badge>
           {summary.varianceReason && <p className="mt-1 text-xs text-gray-500">סיבת הפער: {summary.varianceReason}</p>}
         </div>
         {summary.isOverageUnexplained && <VarianceReasonForm projectId={projectId} lineId={lineId} />}

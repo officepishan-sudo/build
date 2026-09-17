@@ -56,7 +56,18 @@ export async function ChangeDetailView({
           <ChangeStatusActions projectId={projectId} id={change.id} status={change.status} />
         </div>
       </Card>
-      {isEditable(change.status) && <EditChangeForm projectId={projectId} change={change} />}
+      {isEditable(change.status) && (
+        <EditChangeForm
+          projectId={projectId}
+          change={{
+            id: change.id,
+            title: change.title,
+            reason: change.reason,
+            priceImpact: change.priceImpact !== null ? Number(change.priceImpact) : null,
+            scheduleImpactDays: change.scheduleImpactDays,
+          }}
+        />
+      )}
     </div>
   );
 }

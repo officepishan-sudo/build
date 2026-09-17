@@ -1,14 +1,23 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import type { ChangeRequest } from "@prisma/client";
 import { updateChangeRequestAction, type ChangeFormState } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const initialState: ChangeFormState = null;
 
-export function EditChangeForm({ projectId, change }: { projectId: string; change: ChangeRequest }) {
+// DTO מקומי במקום ChangeRequest מ-@prisma/client - קובץ 'use client' לא
+// מייבא מודול צד-שרת; ההמרה מ-Decimal ל-number נעשית ברכיב השרת שקורא כאן.
+export type EditableChange = {
+  id: string;
+  title: string;
+  reason: string;
+  priceImpact: number | null;
+  scheduleImpactDays: number | null;
+};
+
+export function EditChangeForm({ projectId, change }: { projectId: string; change: EditableChange }) {
   const action = updateChangeRequestAction.bind(null, projectId, change.id);
   const [state, formAction] = useFormState(action, initialState);
 
@@ -51,7 +60,7 @@ export function EditChangeForm({ projectId, change }: { projectId: string; chang
               id="priceImpact"
               name="priceImpact"
               type="number"
-              defaultValue={change.priceImpact ? Number(change.priceImpact) : undefined}
+              defaultValue={change.priceImpact ?? undefined}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           </div>

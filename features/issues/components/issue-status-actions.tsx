@@ -1,9 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
-import type { IssueStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { updateIssueStatusAction } from "../actions";
+
+// יוניון מקומי במקום ייבוא IssueStatus מ-@prisma/client - קובץ 'use client'.
+type IssueStatus = "OPEN" | "IN_PROGRESS" | "WAITING" | "RESOLVED" | "CLOSED";
 
 const FREE_TRANSITIONS: { status: IssueStatus; label: string }[] = [
   { status: "OPEN", label: "פתוחה" },

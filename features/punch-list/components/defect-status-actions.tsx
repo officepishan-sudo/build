@@ -1,9 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
-import type { DefectStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { sendDefectForReviewAction, updateDefectStatusAction } from "../actions";
+
+// יוניון מקומי במקום ייבוא DefectStatus מ-@prisma/client - קובץ 'use client'.
+type DefectStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "IN_REVIEW" | "CLOSED";
 
 // מעברים חופשיים בין OPEN/IN_PROGRESS + "העברה לבדיקה" (RESOLVED->IN_REVIEW,
 // שלב ביניים אופציונלי). RESOLVED/CLOSED עצמם דורשים טופס עם הערה (ראו

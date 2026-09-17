@@ -14,7 +14,7 @@ describe("features/interior service", () => {
       const rooms = await service.listRooms(owner.id, project.id);
 
       expect(rooms).toHaveLength(1);
-      expect(rooms[0].items).toEqual([]);
+      expect(rooms[0]?.items).toEqual([]);
     });
 
     it("דוחה משתמש בלי גישת DECIDE ומעלה", async () => {

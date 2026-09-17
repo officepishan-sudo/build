@@ -96,6 +96,15 @@ export function buildBudgetLineSummary(line: RawBudgetLine): BudgetLineSummary {
   };
 }
 
+export type BadgeTone = "neutral" | "success" | "warning" | "info" | "danger";
+
+/** גוון תצוגה לפער - חריגה=אדום, מתחת לתכנון=ירוק, בדיוק לפי התכנון=ניטרלי. */
+export function varianceTone(variance: number): BadgeTone {
+  if (variance > 0) return "danger";
+  if (variance < 0) return "success";
+  return "neutral";
+}
+
 export function computeBudgetTotals(lines: BudgetAmounts[]): BudgetAmounts {
   return lines.reduce(
     (acc, l) => ({

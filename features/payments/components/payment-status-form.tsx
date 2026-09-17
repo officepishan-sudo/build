@@ -5,7 +5,9 @@ import { useFormState, useFormStatus } from "react-dom";
 import { markPaymentPaidAction, updatePaymentStatusAction, type PaymentFormState } from "../actions";
 import { Button } from "@/components/ui/button";
 import { PAYMENT_STATUS_LABEL } from "../constants";
-import type { PaymentStatus } from "@prisma/client";
+
+// יוניון מקומי במקום ייבוא PaymentStatus מ-@prisma/client - קובץ 'use client'.
+type PaymentStatus = "PENDING" | "PAID" | "PARTIAL" | "OVERDUE" | "CANCELLED";
 
 const initialState: PaymentFormState = null;
 

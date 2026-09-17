@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import type { ChangeStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import {
   cancelChangeRequestAction,
@@ -10,6 +9,10 @@ import {
   moveChangeStatusAction,
   rejectChangeRequestAction,
 } from "../actions";
+
+// יוניון מקומי במקום ייבוא ChangeStatus מ-@prisma/client - קובץ 'use client'
+// לא מייבא מודול צד-שרת (ראו קונבנציית decision-quick-actions.tsx).
+type ChangeStatus = "DRAFT" | "CLARIFICATION" | "PROPOSED" | "APPROVAL" | "APPROVED" | "REJECTED" | "DONE" | "CANCELLED";
 import { ChangeApproveConfirm } from "./change-approve-confirm";
 
 export function ChangeStatusActions({

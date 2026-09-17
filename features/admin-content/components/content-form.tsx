@@ -66,13 +66,14 @@ export function ContentForm({ template }: { template?: ContentTemplate }) {
 
 function SubmitButtons({ defaultStatus }: { defaultStatus?: "DRAFT" | "PUBLISHED" }) {
   const { pending } = useFormStatus();
+  const publishLabel = defaultStatus === "PUBLISHED" ? "שמירה ופרסום" : "פרסום";
   return (
     <div className="flex gap-2">
       <Button type="submit" name="status" value="DRAFT" variant="secondary" disabled={pending}>
         {pending ? "שומר..." : "שמירה כטיוטה"}
       </Button>
       <Button type="submit" name="status" value="PUBLISHED" disabled={pending}>
-        {pending ? "שומר..." : defaultStatus === "PUBLISHED" ? "שמירה ופרסום" : "פרסום"}
+        {pending ? "שומר..." : publishLabel}
       </Button>
     </div>
   );

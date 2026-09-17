@@ -77,7 +77,7 @@ describe("features/regulatory service", () => {
       const items = await service.seedChecklist(owner.id, project.id);
 
       expect(items).toHaveLength(1);
-      expect(items[0].title).toBe("היתר שיפוץ");
+      expect(items[0]?.title).toBe("היתר שיפוץ");
     });
 
     it("לא כופלת סעיפים כשכבר קיימת רשימה", async () => {
@@ -96,7 +96,7 @@ describe("features/regulatory service", () => {
       const items = await service.seedChecklist(owner.id, project.id);
 
       expect(items).toHaveLength(1);
-      expect(items[0].title).toBe("קיים כבר");
+      expect(items[0]?.title).toBe("קיים כבר");
     });
   });
 
