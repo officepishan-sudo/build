@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: build_app
+      POSTGRES_PASSWORD: build_app_dev_password
+      POSTGRES_DB: build_app_dev
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - build_app_pgdata:/var/lib/postgresql/data
+
+volumes:
+  build_app_pgdata:

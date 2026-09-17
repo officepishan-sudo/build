@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["app/**/{page,layout,route,error,not-found,loading,template,default}.{ts,tsx}", "middleware.ts", "scripts/**/*.ts", "tests/**/*.ts", "prisma/seed.ts"],
+  "project": ["app/**", "features/**", "components/**", "hooks/**", "lib/**", "scripts/**", "tests/**"],
+  "ignore": ["**/*.d.ts", "prisma/generated/**"],
+  "ignoreDependencies": ["eslint-config-next"],
+  "rules": { "files": "error", "exports": "error", "types": "error", "dependencies": "error", "devDependencies": "warn", "unlisted": "error", "duplicates": "warn" }
+}

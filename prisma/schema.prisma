@@ -1,0 +1,973 @@
+// מודל הנתונים המלא לפי MASTER PRODUCT SPEC - מילון אובייקטים (סעיף 9) + פירוט 39 המסכים.
+// זהו מקור האמת היחיד למבנה הנתונים - שינוי נתמך רק כאן (לא בקוד הפיצ'רים).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===================== משתמשים ושיתוף =====================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedProjects        Project[]           @relation("ProjectOwner")
+  shares               ProjectShare[]
+  professionalProfile  Professional?
+  supplierProfile      Supplier?
+  messages             Message[]
+  notifications        Notification[]
+  versionSnapshots     VersionSnapshot[]
+}
+
+enum ShareLevel {
+  VIEW // צפייה בלבד
+  COMMENT // צפייה + תגובה
+  DECIDE // תגובה + השתתפות בהחלטות שהוקצו
+  MANAGE // ניהול תפעולי לפי תחום
+  OWNER // הבעלים - הכל
+}
+
+model ProjectShare {
+  id         String     @id @default(cuid())
+  projectId  String
+  userId     String
+  level      ShareLevel
+  domain     String? // תחום ניהול ל-MANAGE, למשל "budget" / "schedule" / null = כללי
+  invitedAt  DateTime   @default(now())
+  acceptedAt DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+// ===================== פרויקט =====================
+
+enum ProjectType {
+  NEW_HOME
+  RENOVATION
+  YARD_GARDEN
+  FENCE_GATE
+  PARKING
+  PERGOLA
+  INFRASTRUCTURE
+  INTERIOR_DESIGN
+  OTHER
+}
+
+enum ProjectStatus {
+  NEW
+  PLANNING
+  PREPARING
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectTrack {
+  FULL // מסע מלא
+  QUOTES_ONLY // מסלול "רק הצעות מחיר"
+}
+
+model Project {
+  id                String        @id @default(cuid())
+  ownerId           String
+  name              String
+  type              ProjectType
+  track             ProjectTrack  @default(FULL)
+  status            ProjectStatus @default(NEW)
+  scopeDescription  String?
+  startDateKnown    Boolean       @default(false)
+  startDate         DateTime?
+  isExistingProject Boolean       @default(false) // נכנס דרך P04 - "כניסה לפרויקט שכבר התחיל"
+  pausedReason      String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  owner User @relation("ProjectOwner", fields: [ownerId], references: [id])
+
+  shares               ProjectShare[]
+  requirements         Requirement[]
+  decisions            Decision[]
+  alternatives         Alternative[]
+  questionnaireAnswers QuestionnaireAnswer[]
+  phases               Phase[]
+  tasks                Task[]
+  quantityItems        QuantityItem[]
+  quoteRequests        QuoteRequest[]
+  quotes               Quote[]
+  cartItems            CartItem[]
+  orders               Order[]
+  deliveries           Delivery[]
+  budgetLines          BudgetLine[]
+  expenses             Expense[]
+  payments             Payment[]
+  changeRequests       ChangeRequest[]
+  issues               Issue[]
+  defects              Defect[]
+  documents            Document[]
+  photos               Photo[]
+  messages             Message[]
+  warranties           Warranty[]
+  maintenanceItems     MaintenanceItem[]
+  notifications        Notification[]
+  rooms                Room[]
+  canvasElements       CanvasElement[]
+  inspirationImages    InspirationImage[]
+  regulatoryItems      RegulatoryChecklistItem[]
+  versionSnapshots     VersionSnapshot[]
+
+  @@index([ownerId])
+}
+
+// ===================== שאלון, דרישות, החלטות, חלופות =====================
+
+enum RequirementStatus {
+  KNOWN
+  NEEDS_CHECK // "אני לא יודע" - לא מוריד את הדרישה
+}
+
+model Requirement {
+  id        String            @id @default(cuid())
+  projectId String
+  key       String
+  label     String
+  value     String?
+  status    RequirementStatus @default(KNOWN)
+  source    String? // "questionnaire" | "manual" | "document"
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model QuestionnaireQuestion {
+  id       String  @id @default(cuid())
+  key      String  @unique
+  text     String
+  helpText String?
+  branch   String? // ענף רלוונטי (סוג פרויקט וכו')
+  order    Int     @default(0)
+  active   Boolean @default(true)
+}
+
+model QuestionnaireAnswer {
+  id          String   @id @default(cuid())
+  projectId   String
+  questionKey String
+  answerValue String?
+  isUnknown   Boolean  @default(false) // "אני לא יודע" - לעולם לא מסיר דרישה
+  answeredAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, questionKey])
+  @@index([projectId])
+}
+
+enum DecisionStatus {
+  OPEN
+  DECIDED
+  NEEDS_CHECK
+}
+
+model Decision {
+  id           String         @id @default(cuid())
+  projectId    String
+  title        String
+  description  String?
+  deadline     DateTime?
+  dependsOn    String?
+  sourceType   String? // מאיזה מסך/אובייקט נוצרה ההחלטה
+  sourceId     String?
+  status       DecisionStatus @default(OPEN)
+  decidedValue String?
+  decidedAt    DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Alternative {
+  id                   String   @id @default(cuid())
+  projectId            String
+  title                String
+  description          String
+  priceMin             Decimal? @db.Decimal(12, 2)
+  priceMax             Decimal? @db.Decimal(12, 2)
+  durationDays         Int?
+  pros                 String[]
+  cons                 String[]
+  maintenanceNotes     String?
+  materialsNotes       String?
+  imageUrl             String?
+  reasonShown          String? // "למה אני רואה זאת"
+  isSelected           Boolean  @default(false)
+  requirementsSnapshot Json? // תמונת מצב הדרישות בזמן היצירה, ל-Change Impact
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ===================== לוח זמנים =====================
+
+enum PhaseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+  DELAYED
+}
+
+model Phase {
+  id             String      @id @default(cuid())
+  projectId      String
+  name           String
+  order          Int         @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  status         PhaseStatus @default(NOT_STARTED)
+  dependsOnPhaseId String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks      Task[]
+  deliveries Delivery[]
+  quantityItems QuantityItem[]
+  photos     Photo[]
+  issues     Issue[]
+
+  @@index([projectId])
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+  DELAYED
+}
+
+model Task {
+  id                     String     @id @default(cuid())
+  projectId              String
+  phaseId                String?
+  title                  String
+  assigneeProfessionalId String?
+  startDate              DateTime?
+  endDate                DateTime?
+  status                 TaskStatus @default(NOT_STARTED)
+  notes                  String?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase       Phase?       @relation(fields: [phaseId], references: [id])
+  assignee    Professional? @relation(fields: [assigneeProfessionalId], references: [id])
+
+  @@index([projectId])
+  @@index([phaseId])
+}
+
+// ===================== כתב כמויות =====================
+
+model QuantityItem {
+  id            String   @id @default(cuid())
+  projectId     String
+  phaseId       String?
+  category      String
+  description   String
+  quantity      Decimal  @db.Decimal(12, 3)
+  unit          String
+  materialCost  Decimal? @db.Decimal(12, 2)
+  laborCost     Decimal? @db.Decimal(12, 2)
+  transportCost Decimal? @db.Decimal(12, 2)
+  totalCost     Decimal? @db.Decimal(12, 2)
+  source        String? // מקור הנתון
+  needsCheck    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   Phase?  @relation(fields: [phaseId], references: [id])
+
+  @@index([projectId])
+}
+
+// ===================== בעלי מקצוע, ספקים, מוצרים =====================
+
+model Professional {
+  id                String   @id @default(cuid())
+  userId            String?  @unique
+  name              String
+  fields            String[] // תחומים
+  area              String
+  experienceYears   Int?
+  responseTimeHours Int?
+  ratingAvg         Decimal? @db.Decimal(3, 2)
+  bio               String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user           User?           @relation(fields: [userId], references: [id])
+  tasks          Task[]
+  quotes         Quote[]
+  quoteRequestRecipients QuoteRequestRecipient[]
+  orders         Order[]
+  warranties     Warranty[]
+  reviews        Review[]
+  issues         Issue[]
+  defects        Defect[]
+
+  @@index([userId])
+}
+
+model Supplier {
+  id             String   @id @default(cuid())
+  userId         String?  @unique
+  name           String
+  categories     String[]
+  area           String?
+  terms          String?
+  warrantyPolicy String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user     User?      @relation(fields: [userId], references: [id])
+  products Product[]
+  quotes   Quote[]
+  quoteRequestRecipients QuoteRequestRecipient[]
+  orders   Order[]
+  deliveries Delivery[]
+  cartItems CartItem[]
+  warranties Warranty[]
+  reviews  Review[]
+
+  @@index([userId])
+}
+
+model Review {
+  id             String   @id @default(cuid())
+  professionalId String?
+  supplierId     String?
+  authorProjectId String
+  rating         Int
+  comment        String?
+  createdAt      DateTime @default(now())
+
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  supplierId       String
+  name             String
+  category         String
+  priceMin         Decimal? @db.Decimal(12, 2)
+  priceMax         Decimal? @db.Decimal(12, 2)
+  unit             String
+  deliveryLeadDays Int?
+  availability     String?
+  warrantyMonths   Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  supplier  Supplier   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+
+  @@index([supplierId])
+}
+
+// ===================== הצעות מחיר =====================
+
+enum QuoteRequestStatus {
+  DRAFT
+  SENT
+  CANCELLED
+}
+
+model QuoteRequest {
+  id         String             @id @default(cuid())
+  projectId  String
+  title      String
+  scopeText  String
+  deadline   DateTime?
+  status     QuoteRequestStatus @default(DRAFT)
+  sentAt     DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  project    Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  recipients QuoteRequestRecipient[]
+  quotes     Quote[]
+
+  @@index([projectId])
+}
+
+model QuoteRequestRecipient {
+  id             String  @id @default(cuid())
+  quoteRequestId String
+  professionalId String?
+  supplierId     String?
+
+  quoteRequest QuoteRequest  @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+
+  @@index([quoteRequestId])
+}
+
+enum QuoteStatus {
+  RECEIVED
+  REVIEW
+  SELECTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+model Quote {
+  id             String      @id @default(cuid())
+  projectId      String
+  quoteRequestId String?
+  professionalId String?
+  supplierId     String?
+  price          Decimal     @db.Decimal(12, 2)
+  includesNotes  String?
+  durationDays   Int?
+  paymentTerms   String?
+  warrantyText   String?
+  notes          String?
+  status         QuoteStatus @default(RECEIVED)
+  gapVsEstimate  Decimal?    @db.Decimal(12, 2)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quoteRequest QuoteRequest? @relation(fields: [quoteRequestId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+
+  @@index([projectId])
+}
+
+// ===================== עגלה, הזמנות, אספקות =====================
+
+model CartItem {
+  id          String   @id @default(cuid())
+  projectId   String
+  productId   String?
+  description String
+  quantity    Decimal  @db.Decimal(12, 3)
+  unitPrice   Decimal? @db.Decimal(12, 2)
+  supplierId  String?
+  phaseId     String?
+  createdAt   DateTime @default(now())
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  product  Product?  @relation(fields: [productId], references: [id])
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@index([projectId])
+}
+
+enum OrderStatus {
+  DRAFT
+  SENT
+  CONFIRMED
+  IN_PROGRESS
+  PARTIALLY_DELIVERED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  projectId      String
+  number         String
+  supplierId     String?
+  professionalId String?
+  phaseId        String?
+  totalAmount    Decimal     @db.Decimal(12, 2)
+  status         OrderStatus @default(DRAFT)
+  orderDate      DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  items        OrderItem[]
+  deliveries   Delivery[]
+  expenses     Expense[]
+  payments     Payment[]
+
+  @@index([projectId])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  description String
+  quantity    Decimal @db.Decimal(12, 3)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  totalPrice  Decimal @db.Decimal(12, 2)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+enum DeliveryStatus {
+  PENDING
+  SCHEDULED
+  IN_TRANSIT
+  RECEIVED
+  PARTIAL
+  LATE
+  CANCELLED
+}
+
+model Delivery {
+  id           String         @id @default(cuid())
+  projectId    String
+  orderId      String?
+  phaseId      String?
+  supplierId   String?
+  expectedDate DateTime?
+  receivedDate DateTime?
+  status       DeliveryStatus @default(PENDING)
+  itemsSummary String?
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order    Order?    @relation(fields: [orderId], references: [id])
+  phase    Phase?    @relation(fields: [phaseId], references: [id])
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@index([projectId])
+}
+
+// ===================== תקציב, הוצאות, תשלומים =====================
+
+model BudgetLine {
+  id               String   @id @default(cuid())
+  projectId        String
+  category         String
+  plannedAmount    Decimal  @db.Decimal(12, 2)
+  committedAmount  Decimal  @default(0) @db.Decimal(12, 2)
+  actualAmount     Decimal  @default(0) @db.Decimal(12, 2)
+  paidAmount       Decimal  @default(0) @db.Decimal(12, 2)
+  varianceReason   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@index([projectId])
+}
+
+model Expense {
+  id           String   @id @default(cuid())
+  projectId    String
+  budgetLineId String?
+  orderId      String?
+  description  String
+  amount       Decimal  @db.Decimal(12, 2)
+  date         DateTime @default(now())
+  source       String? // "order" | "manual"
+  createdAt    DateTime @default(now())
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  budgetLine BudgetLine? @relation(fields: [budgetLineId], references: [id])
+  order      Order?      @relation(fields: [orderId], references: [id])
+  payments   Payment[]
+
+  @@index([projectId])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  OVERDUE
+  CANCELLED
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  projectId   String
+  payeeName   String
+  expenseId   String?
+  orderId     String?
+  quoteId     String?
+  amount      Decimal       @db.Decimal(12, 2)
+  dueDate     DateTime?
+  paidDate    DateTime?
+  status      PaymentStatus @default(PENDING)
+  documentId  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expense Expense? @relation(fields: [expenseId], references: [id])
+  order   Order?   @relation(fields: [orderId], references: [id])
+
+  @@index([projectId])
+}
+
+// ===================== שינויים, בעיות, ליקויים =====================
+
+enum ChangeStatus {
+  DRAFT
+  CLARIFICATION
+  PROPOSED
+  APPROVAL
+  APPROVED
+  REJECTED
+  DONE
+  CANCELLED
+}
+
+model ChangeRequest {
+  id                    String       @id @default(cuid())
+  projectId             String
+  title                 String
+  reason                String
+  status                ChangeStatus @default(DRAFT)
+  priceImpact           Decimal?     @db.Decimal(12, 2)
+  scheduleImpactDays    Int?
+  affectedQuoteIds      String[]
+  affectedOrderIds      String[]
+  affectedQuantityIds   String[]
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  decidedAt             DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+model Issue {
+  id                     String      @id @default(cuid())
+  projectId              String
+  phaseId                String?
+  title                  String
+  description            String
+  type                   String?
+  assigneeProfessionalId String?
+  dueDate                DateTime?
+  status                 IssueStatus @default(OPEN)
+  impact                 String?
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  project  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase    Phase?        @relation(fields: [phaseId], references: [id])
+  assignee Professional? @relation(fields: [assigneeProfessionalId], references: [id])
+  photos   Photo[]
+
+  @@index([projectId])
+}
+
+enum DefectStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  IN_REVIEW
+  CLOSED
+}
+
+model Defect {
+  id                     String       @id @default(cuid())
+  projectId              String
+  title                  String
+  description            String
+  assigneeProfessionalId String?
+  dueDate                DateTime?
+  status                 DefectStatus @default(OPEN)
+  resolutionNotes        String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  project  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee Professional? @relation(fields: [assigneeProfessionalId], references: [id])
+  photos   Photo[]
+
+  @@index([projectId])
+}
+
+// ===================== מסמכים, תמונות, תקשורת =====================
+
+model Document {
+  id          String   @id @default(cuid())
+  projectId   String
+  category    String // תוכניות/הצעות/חוזים/חשבוניות/אישורים/הזמנות/אחריות/תיעוד
+  name        String
+  fileUrl     String
+  relatedType String?
+  relatedId   String?
+  notes       String?
+  uploadedAt  DateTime @default(now())
+
+  project  Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([projectId])
+}
+
+model Photo {
+  id            String   @id @default(cuid())
+  projectId     String
+  phaseId       String?
+  issueId       String?
+  defectId      String?
+  url           String
+  takenAt       DateTime @default(now())
+  caption       String?
+  isBeforeAfter Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phase   Phase?  @relation(fields: [phaseId], references: [id])
+  issue   Issue?  @relation(fields: [issueId], references: [id])
+  defect  Defect? @relation(fields: [defectId], references: [id])
+
+  @@index([projectId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  projectId   String
+  authorUserId String
+  body        String
+  relatedType String?
+  relatedId   String?
+  createdAt   DateTime @default(now())
+
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author     User       @relation(fields: [authorUserId], references: [id])
+  attachments Document[]
+
+  @@index([projectId])
+}
+
+// ===================== אחריות, תחזוקה, ספר הפרויקט =====================
+
+model Warranty {
+  id               String   @id @default(cuid())
+  projectId        String
+  itemDescription  String
+  supplierId       String?
+  professionalId   String?
+  startDate        DateTime
+  durationMonths   Int
+  documentId       String?
+  createdAt        DateTime @default(now())
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  maintenanceItems MaintenanceItem[]
+
+  @@index([projectId])
+}
+
+model MaintenanceItem {
+  id           String    @id @default(cuid())
+  projectId    String
+  warrantyId   String?
+  title        String
+  frequency    String?
+  nextDueDate  DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  warranty Warranty? @relation(fields: [warrantyId], references: [id])
+
+  @@index([projectId])
+}
+
+// ===================== התראות =====================
+
+enum NotificationType {
+  INFO
+  WARNING
+  ACTION_REQUIRED
+}
+
+model Notification {
+  id         String            @id @default(cuid())
+  projectId  String
+  userId     String
+  type       NotificationType  @default(INFO)
+  title      String
+  body       String
+  sourceType String?
+  sourceId   String?
+  isRead     Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+// ===================== קנבס ותכנון פנים (שלב שלישי - גרסה מצומצמת) =====================
+
+model CanvasElement {
+  id                  String   @id @default(cuid())
+  projectId           String
+  imageUrl            String?
+  x                   Float
+  y                   Float
+  label               String?
+  note                String?
+  linkedRequirementId String?
+  createdAt           DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Room {
+  id           String   @id @default(cuid())
+  projectId    String
+  name         String
+  notes        String?
+  budgetLineId String?
+  createdAt    DateTime @default(now())
+
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items   InteriorItem[]
+
+  @@index([projectId])
+}
+
+model InteriorItem {
+  id            String   @id @default(cuid())
+  roomId        String
+  category      String // furniture / lighting / finish
+  productId     String?
+  decisionText  String?
+  quantity      Decimal? @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+}
+
+model InspirationImage {
+  id                  String   @id @default(cuid())
+  projectId           String
+  url                 String
+  note                String?
+  linkedRequirementId String?
+  linkedAlternativeId String?
+  approvedForLink     Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ===================== רגולציה, תוכן, גרסאות =====================
+
+model RegulatoryChecklistItem {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  isChecked   Boolean  @default(false)
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum ContentTemplateType {
+  QUESTION
+  ALTERNATIVE
+  PRODUCT
+  CHECKLIST_ITEM
+  HELP
+}
+
+enum ContentTemplateStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model ContentTemplate {
+  id        String                 @id @default(cuid())
+  type      ContentTemplateType
+  key       String
+  payload   Json
+  status    ContentTemplateStatus  @default(DRAFT)
+  updatedAt DateTime               @updatedAt
+  createdAt DateTime               @default(now())
+
+  @@unique([type, key])
+}
+
+model VersionSnapshot {
+  id              String   @id @default(cuid())
+  projectId       String
+  entityType      String
+  entityId        String
+  dataBefore      Json?
+  dataAfter       Json
+  reason          String?
+  createdByUserId String
+  createdAt       DateTime @default(now())
+
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdByUser User    @relation(fields: [createdByUserId], references: [id])
+
+  @@index([projectId])
+}

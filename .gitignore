@@ -1,0 +1,14 @@
+node_modules
+.next
+.env
+.env.local
+dist
+build
+coverage
+*.tsbuildinfo
+.turbo
+prisma/dev.db
+/generated
+.DS_Store
+npm-debug.log*
+.structure-baseline
