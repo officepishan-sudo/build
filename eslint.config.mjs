@@ -127,6 +127,9 @@ export default tseslint.config(
       "lib/db/**",
       "lib/prisma.ts",
       "app/api/health/route.ts",
+      // app/**/_lib/** - שאילתות אגרגציה חוצות-דומיין ברמת עמוד (למשל לוח שנה),
+      // read-only, כשאין להן פיצ'ר בעלים משותף. ראו .dependency-cruiser.cjs ו-.structure-gate.conf.
+      "app/**/_lib/**",
     ],
     rules: { "no-restricted-imports": "off" },
   },
