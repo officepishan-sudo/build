@@ -1,18 +1,18 @@
 export type PhaseOption = { id: string; name: string };
 
-// צורת שורת כתב כמויות כפי שחוזרת מ-repository.listQuantityItems (כולל שלב משויך).
+// DTO של שורת כתב כמויות למסך - מספרים רגילים, לא Decimal של Prisma (ראו toQuantityRowDto ב-service.ts).
 export type QuantityRowData = {
   id: string;
   phaseId: string | null;
   phase: { id: string; name: string } | null;
   category: string;
   description: string;
-  quantity: unknown;
+  quantity: number;
   unit: string;
-  materialCost: unknown;
-  laborCost: unknown;
-  transportCost: unknown;
-  totalCost: unknown;
+  materialCost: number | null;
+  laborCost: number | null;
+  transportCost: number | null;
+  totalCost: number | null;
   source: string | null;
   needsCheck: boolean;
 };

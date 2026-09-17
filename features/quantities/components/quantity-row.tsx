@@ -36,7 +36,7 @@ export function QuantityRow({
     <tr className="border-b border-gray-100 text-sm">
       <td className="px-2 py-2">{item.description}</td>
       <td className="px-2 py-2">
-        {Number(item.quantity)} {item.unit}
+        {item.quantity} {item.unit}
       </td>
       <td className="px-2 py-2">{formatCurrency(item.materialCost)}</td>
       <td className="px-2 py-2">{formatCurrency(item.laborCost)}</td>

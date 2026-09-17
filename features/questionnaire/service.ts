@@ -1,12 +1,8 @@
 import { requireProjectAccess } from "@/lib/auth/rbac";
 import { ValidationError } from "@/lib/errors";
 import { answerQuestionSchema } from "./schema";
+import type { QuestionnaireState } from "./types";
 import * as repo from "./repository";
-
-export type QuestionnaireState = {
-  questions: { key: string; text: string; helpText: string | null; branch: string | null; order: number }[];
-  answers: Record<string, { answerValue: string | null; isUnknown: boolean }>;
-};
 
 export async function getQuestionnaireState(userId: string, projectId: string): Promise<QuestionnaireState> {
   await requireProjectAccess(projectId, userId, "VIEW");

@@ -36,7 +36,7 @@ describe("computeChangeImpact", () => {
     });
 
     expect(result.affectedRequirements).toHaveLength(1);
-    expect(result.affectedRequirements[0].status).toBe("NEEDS_CHECK");
+    expect(result.affectedRequirements.at(0)?.status).toBe("NEEDS_CHECK");
     expect(result.needsReviewCount).toBe(1);
   });
 

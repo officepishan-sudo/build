@@ -3,23 +3,44 @@ import { NotFoundError } from "@/lib/errors";
 import { quantityFilterSchema, quantityItemSchema } from "./schema";
 import { computeGrandTotal, computeLineTotal } from "./pricing";
 import * as repo from "./repository";
+import type { QuantityRowData } from "./types";
 
 export async function listQuantityBoard(userId: string, projectId: string, rawFilters: unknown) {
   await requireProjectAccess(projectId, userId, "VIEW");
   const filters = quantityFilterSchema.parse(rawFilters);
 
-  const [items, categoryRows, phases] = await Promise.all([
+  const [rows, categoryRows, phases] = await Promise.all([
     repo.listQuantityItems(projectId, filters),
     repo.listDistinctCategories(projectId),
     repo.listPhasesForProject(projectId),
   ]);
 
+  const items = rows.map(toQuantityRowDto);
+
   return {
     items,
-    grandTotal: computeGrandTotal(items.map((item) => ({ totalCost: item.totalCost ? Number(item.totalCost) : null }))),
+    grandTotal: computeGrandTotal(items),
     categories: categoryRows.map((row) => row.category),
     phases,
     filters,
+  };
+}
+
+function toQuantityRowDto(row: Awaited<ReturnType<typeof repo.listQuantityItems>>[number]): QuantityRowData {
+  return {
+    id: row.id,
+    phaseId: row.phaseId,
+    phase: row.phase ? { id: row.phase.id, name: row.phase.name } : null,
+    category: row.category,
+    description: row.description,
+    quantity: Number(row.quantity),
+    unit: row.unit,
+    materialCost: row.materialCost === null ? null : Number(row.materialCost),
+    laborCost: row.laborCost === null ? null : Number(row.laborCost),
+    transportCost: row.transportCost === null ? null : Number(row.transportCost),
+    totalCost: row.totalCost === null ? null : Number(row.totalCost),
+    source: row.source,
+    needsCheck: row.needsCheck,
   };
 }
 

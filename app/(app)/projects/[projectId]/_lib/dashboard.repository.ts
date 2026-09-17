@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { ChangeStatus } from "@prisma/client";
 import type { BudgetSummaryData, ProjectHeaderData, ActivityItem } from "./dashboard-types";
 
 // שכבת נתונים ייעודית לדף הדשבורד (P11) בלבד - אגרגציה חוצת-תחומים לקריאה בלבד.
@@ -47,7 +48,7 @@ export function getUpcomingDeliveries(projectId: string, take = 5) {
 }
 
 export async function getOpenChangeRequests(projectId: string, take = 5) {
-  const where = { projectId, status: { notIn: ["DONE", "CANCELLED", "REJECTED"] as const } };
+  const where = { projectId, status: { notIn: ["DONE", "CANCELLED", "REJECTED"] as ChangeStatus[] } };
   const [count, items] = await Promise.all([
     prisma.changeRequest.count({ where }),
     prisma.changeRequest.findMany({ where, orderBy: { updatedAt: "desc" }, take }),
