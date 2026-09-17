@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { createTaskAction, updateTaskAction, type ScheduleFormState } from "../actions";
 import { TASK_STATUS_LABEL } from "../constants";
+import { toDateInput } from "../date-input";
 import type { ProfessionalOption, TaskLike } from "../types";
 
 const initialState: ScheduleFormState = null;
@@ -91,9 +92,4 @@ function FormActions({ onCancel }: { onCancel?: () => void }) {
       )}
     </div>
   );
-}
-
-function toDateInput(date: Date | null | undefined): string {
-  if (!date) return "";
-  return new Date(date).toISOString().slice(0, 10);
 }

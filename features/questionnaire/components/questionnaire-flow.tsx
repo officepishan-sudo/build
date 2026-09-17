@@ -19,7 +19,7 @@ export function QuestionnaireFlow({
   const router = useRouter();
   const flow = useQuestionnaireFlow(projectId, questions, initialAnswers);
 
-  if (questions.length === 0) {
+  if (questions.length === 0 || !flow.current) {
     return <p className="text-gray-500">אין עדיין שאלות מוגדרות במערכת.</p>;
   }
 

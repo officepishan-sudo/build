@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ConflictBanner } from "@/components/ui/states";
 import type { ChangeImpactResult } from "@/lib/change-impact";
 
+function confirmButtonLabel(isPending: boolean, isSelected: boolean): string {
+  if (isPending) return "מאשר...";
+  return isSelected ? "אושרה - בחירה מחדש" : "אשר בחירת חלופה זו";
+}
+
 export function SelectionConfirm({
   projectId,
   alternativeId,

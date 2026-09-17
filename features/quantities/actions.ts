@@ -7,7 +7,7 @@ import * as service from "./service";
 
 export type QuantityFormState = { ok?: boolean; error?: string; fieldErrors?: Record<string, string[]> } | null;
 
-function readItemForm(formData: FormData) {
+function readQuantityItemForm(formData: FormData) {
   return {
     phaseId: formData.get("phaseId") || undefined,
     category: formData.get("category"),
@@ -38,7 +38,7 @@ export async function createQuantityItemAction(
 ): Promise<QuantityFormState> {
   const session = await requireSession();
   try {
-    await service.createQuantityItem(session.userId, projectId, readItemForm(formData));
+    await service.createQuantityItem(session.userId, projectId, readQuantityItemForm(formData));
   } catch (error) {
     return toFormState(error);
   }
@@ -54,7 +54,7 @@ export async function updateQuantityItemAction(
 ): Promise<QuantityFormState> {
   const session = await requireSession();
   try {
-    await service.updateQuantityItem(session.userId, projectId, itemId, readItemForm(formData));
+    await service.updateQuantityItem(session.userId, projectId, itemId, readQuantityItemForm(formData));
   } catch (error) {
     return toFormState(error);
   }

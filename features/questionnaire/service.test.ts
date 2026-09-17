@@ -21,7 +21,7 @@ describe("questionnaire service", () => {
     const project = await createTestProject(owner.id);
     await getQuestionnaireState(owner.id, project.id); // מוודא שהשאלות קיימות
 
-    const key = DEFAULT_QUESTIONS[0].key;
+    const key = DEFAULT_QUESTIONS[0]!.key;
     await saveAnswer(owner.id, project.id, { questionKey: key, isUnknown: true });
 
     const requirement = await prisma.requirement.findFirst({ where: { projectId: project.id, key } });
@@ -39,14 +39,15 @@ describe("questionnaire service", () => {
     const project = await createTestProject(owner.id);
     await getQuestionnaireState(owner.id, project.id);
 
-    const [firstKey, secondKey] = DEFAULT_QUESTIONS.map((q) => q.key);
+    const firstKey = DEFAULT_QUESTIONS[0]!.key;
+    const secondKey = DEFAULT_QUESTIONS[1]!.key;
     await saveAnswer(owner.id, project.id, { questionKey: firstKey, answerValue: "תשובה א", isUnknown: false });
     await saveAnswer(owner.id, project.id, { questionKey: secondKey, answerValue: "תשובה ב", isUnknown: false });
 
     await saveAnswer(owner.id, project.id, { questionKey: firstKey, answerValue: "תשובה א מעודכנת", isUnknown: false });
 
     const state = await getQuestionnaireState(owner.id, project.id);
-    expect(state.answers[firstKey].answerValue).toBe("תשובה א מעודכנת");
-    expect(state.answers[secondKey].answerValue).toBe("תשובה ב");
+    expect(state.answers[firstKey]?.answerValue).toBe("תשובה א מעודכנת");
+    expect(state.answers[secondKey]?.answerValue).toBe("תשובה ב");
   });
 });

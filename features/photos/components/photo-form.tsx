@@ -85,9 +85,14 @@ export function PhotoForm({
 
 function SubmitButton({ isEdit }: { isEdit: boolean }) {
   const { pending } = useFormStatus();
+  const label = pending ? "שומר..." : submitLabel(isEdit);
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "שומר..." : isEdit ? "שמירת שינויים" : "הוספת תמונה"}
+      {label}
     </Button>
   );
+}
+
+function submitLabel(isEdit: boolean) {
+  return isEdit ? "שמירת שינויים" : "הוספת תמונה";
 }

@@ -23,7 +23,7 @@ export function PhotoCard({ projectId, photo }: { projectId: string; photo: Phot
         {broken ? (
           <span className="p-4 text-center text-xs text-gray-400">לא ניתן לטעון את התמונה מהקישור שנשמר</span>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- קישור חיצוני שהמשתמש הדביק, לא asset מקומי
+          // תמונה מקישור חיצוני שהמשתמש הדביק (DEC: אין backend להעלאת קבצים) - לא asset מקומי, אין תועלת ב-next/image.
           <img
             src={photo.url}
             alt={photo.caption ?? "תמונת פרויקט"}

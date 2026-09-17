@@ -84,9 +84,14 @@ export function DocumentForm({ projectId, document }: { projectId: string; docum
 
 function SubmitButton({ isEdit }: { isEdit: boolean }) {
   const { pending } = useFormStatus();
+  const label = pending ? "שומר..." : submitLabel(isEdit);
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "שומר..." : isEdit ? "שמירת שינויים" : "הוספת מסמך"}
+      {label}
     </Button>
   );
+}
+
+function submitLabel(isEdit: boolean) {
+  return isEdit ? "שמירת שינויים" : "הוספת מסמך";
 }

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { prisma } from "@/lib/prisma";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import { createTestProject, createTestUser } from "../../tests/helpers/factories";
 import { createNotification, listMyNotifications, markNotificationRead } from "./service";
