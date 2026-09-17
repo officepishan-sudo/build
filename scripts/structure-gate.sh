@@ -269,7 +269,10 @@ done < "$TMP/files.txt"
 while IFS= read -r f; do
   case "$f" in *.tsx|*.ts|*.jsx|*.js) ;; *) continue ;; esac
   if head -5 "$f" | grep -qE "^['\"]use client['\"]"; then
-    if grep -qE "from ['\"](fs|node:fs|child_process|node:child_process|nodemailer|@prisma/client|server-only)['\"]" "$f"; then
+    # local patch: "import type { X } from '@prisma/client'" ships zero runtime code to the
+    # client bundle - only flag a real (non type-only) import of a server-only module.
+    if grep -E "from ['\"](fs|node:fs|child_process|node:child_process|nodemailer|@prisma/client|server-only)['\"]" "$f" \
+        | grep -qvE "^\s*import\s+type\s"; then
       printf 'server-import-in-client\t%s\t%s\n' "$f" "'use client' file imports server-only module" >> "$VIOL"
     fi
   fi

@@ -20,7 +20,7 @@ export function ContentForm({ template }: { template?: ContentTemplate }) {
       <label className="block text-sm text-gray-700">
         סוג תוכן
         <select
-          name="type"
+          name={template ? undefined : "type"}
           value={type}
           disabled={Boolean(template)}
           onChange={(e) => setType(e.target.value as (typeof TEMPLATE_TYPE_VALUES)[number])}
@@ -32,6 +32,8 @@ export function ContentForm({ template }: { template?: ContentTemplate }) {
             </option>
           ))}
         </select>
+        {/* select מנוטרל לא נשלח ב-FormData - תבנית קיימת שולחת את הסוג הקבוע דרך שדה חבוי */}
+        {template && <input type="hidden" name="type" value={type} />}
         {template && <p className="mt-1 text-xs text-gray-400">אי אפשר לשנות סוג לתבנית קיימת - צרו תבנית חדשה.</p>}
       </label>
       <label className="block text-sm text-gray-700">

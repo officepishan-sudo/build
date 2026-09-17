@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { logoutAction } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
 import type { SessionPayload } from "@/lib/auth/session";
 
@@ -10,7 +9,15 @@ const NAV_LINKS = [
   { href: "/notifications", label: "התראות" },
 ];
 
-export function AppShell({ session, children }: { session: SessionPayload; children: React.ReactNode }) {
+type AppShellProps = {
+  session: SessionPayload;
+  children: React.ReactNode;
+  // shared components/ never import features/ directly - the caller (an app/ route) passes
+  // its feature's server action in as a prop.
+  onLogout: () => Promise<void>;
+};
+
+export function AppShell({ session, children, onLogout }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-gray-200 bg-white">
@@ -27,7 +34,7 @@ export function AppShell({ session, children }: { session: SessionPayload; child
           </nav>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-gray-500">שלום, {session.name}</span>
-            <form action={logoutAction}>
+            <form action={onLogout}>
               <Button type="submit" variant="ghost">
                 התנתקות
               </Button>
