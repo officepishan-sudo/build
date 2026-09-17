@@ -6,6 +6,11 @@ import type { QuestionnaireState } from "../types";
 
 export type QuestionnaireFlowQuestion = QuestionnaireState["questions"][number];
 
+function findFirstUnansweredIndex(questions: QuestionnaireFlowQuestion[], answers: QuestionnaireState["answers"]): number {
+  const idx = questions.findIndex((q) => !(q.key in answers));
+  return idx === -1 ? Math.max(0, questions.length - 1) : idx;
+}
+
 /**
  * מנוע השאלון בצד הלקוח: שאלה אחת בכל פעם, שמירה אוטומטית לכל תשובה, חזרה
  * לשאלה קודמת בלי לאבד תשובות אחרות. ראו דוח הסוכן לגבי "רענון ענפים חכם" (פער ידוע).
@@ -17,10 +22,7 @@ export function useQuestionnaireFlow(
   questions: QuestionnaireFlowQuestion[],
   initialAnswers: QuestionnaireState["answers"],
 ) {
-  const firstUnanswered = useMemo(() => {
-    const idx = questions.findIndex((q) => !(q.key in initialAnswers));
-    return idx === -1 ? Math.max(0, questions.length - 1) : idx;
-  }, [questions, initialAnswers]);
+  const firstUnanswered = useMemo(() => findFirstUnansweredIndex(questions, initialAnswers), [questions, initialAnswers]);
 
   const [index, setIndex] = useState(firstUnanswered);
   const [answers, setAnswers] = useState(initialAnswers);
@@ -31,28 +33,14 @@ export function useQuestionnaireFlow(
   const isLast = questions.length === 0 || index >= questions.length - 1;
   const isDone = questions.length > 0 && questions.every((q) => q.key in answers);
 
-  function persist(questionKey: string, answerValue: string | undefined, isUnknown: boolean) {
-    setAnswers((prev) => ({ ...prev, [questionKey]: { answerValue: answerValue ?? null, isUnknown } }));
+  function advance(answerValue: string | undefined, isUnknown: boolean) {
+    if (!current) return;
+    setAnswers((prev) => ({ ...prev, [current.key]: { answerValue: answerValue ?? null, isUnknown } }));
     startTransition(async () => {
-      const result = await saveAnswerAction(projectId, { questionKey, answerValue, isUnknown });
+      const result = await saveAnswerAction(projectId, { questionKey: current.key, answerValue, isUnknown });
       setError(result && !result.ok ? (result.error ?? "שמירה נכשלה") : null);
     });
-  }
-
-  function answerAndNext(answerValue: string) {
-    if (!current) return;
-    persist(current.key, answerValue, false);
     if (!isLast) setIndex((i) => i + 1);
-  }
-
-  function markUnknownAndNext() {
-    if (!current) return;
-    persist(current.key, undefined, true);
-    if (!isLast) setIndex((i) => i + 1);
-  }
-
-  function goBack() {
-    setIndex((i) => Math.max(0, i - 1));
   }
 
   return {
@@ -64,8 +52,8 @@ export function useQuestionnaireFlow(
     isPending,
     error,
     currentAnswer: current ? answers[current.key] : undefined,
-    answerAndNext,
-    markUnknownAndNext,
-    goBack,
+    answerAndNext: (value: string) => advance(value, false),
+    markUnknownAndNext: () => advance(undefined, true),
+    goBack: () => setIndex((i) => Math.max(0, i - 1)),
   };
 }

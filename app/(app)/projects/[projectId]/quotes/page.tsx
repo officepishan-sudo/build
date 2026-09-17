@@ -10,7 +10,7 @@ export default async function QuotesPage({ params }: { params: { projectId: stri
     <div>
       <PageHeader
         title="השוואת הצעות מחיר"
-        description="השוואה ניטרלית - המערכת לא קובעת \"מנצחת\". הבחירה בהצעה היא תמיד פעולה מפורשת שלכם."
+        description={'השוואה ניטרלית - המערכת לא קובעת "מנצחת". הבחירה בהצעה היא תמיד פעולה מפורשת שלכם.'}
       />
       <QuotesList userId={session.userId} projectId={params.projectId} />
       <details className="mt-8 rounded-lg border border-gray-200 bg-white p-4">

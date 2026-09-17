@@ -16,7 +16,9 @@ export async function getQuote(userId: string, projectId: string, quoteId: strin
   await requireProjectAccess(projectId, userId, "VIEW");
   const quote = await repo.findQuoteById(quoteId, projectId);
   if (!quote) throw new NotFoundError("הצעת מחיר");
-  const [withName] = await attachRecipientNames([quote]);
+  const withNames = await attachRecipientNames([quote]);
+  const withName = withNames[0];
+  if (!withName) throw new NotFoundError("הצעת מחיר");
   return withName;
 }
 

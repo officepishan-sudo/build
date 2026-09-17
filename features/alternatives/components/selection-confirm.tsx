@@ -54,7 +54,7 @@ export function SelectionConfirm({
           disabled={isPending}
           onClick={() => startTransition(() => confirmSelectAlternativeAction(projectId, alternativeId, reason))}
         >
-          {isPending ? "מאשר..." : isSelected ? "אושרה - בחירה מחדש" : "אשר בחירת חלופה זו"}
+          {confirmButtonLabel(isPending, isSelected)}
         </Button>
       </div>
       <p className="mt-2 text-xs text-gray-400">הבחירה אינה סופית - אפשר לשנות אותה בהמשך, תמיד דרך אישור מפורש כזה.</p>
