@@ -35,7 +35,16 @@ export function ProductRow({
         <div className="mt-3">
           <ProductForm
             action={updateProductAction.bind(null, supplierId, product.id)}
-            defaultValues={product}
+            defaultValues={{
+              name: product.name,
+              category: product.category,
+              priceMin: product.priceMin?.toString() ?? null,
+              priceMax: product.priceMax?.toString() ?? null,
+              unit: product.unit,
+              deliveryLeadDays: product.deliveryLeadDays?.toString() ?? null,
+              availability: product.availability,
+              warrantyMonths: product.warrantyMonths?.toString() ?? null,
+            }}
             submitLabel="שמירת שינויים"
           />
         </div>

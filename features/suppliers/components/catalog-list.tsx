@@ -11,13 +11,7 @@ export async function CatalogList({ category, projectId }: { category?: string; 
     return (
       <EmptyState
         title="הקטלוג ריק"
-        description={
-          suppliers.length === 0
-            ? "אין עדיין ספקים במאגר - יש להוסיף ספק לפני הוספת מוצרים."
-            : category
-              ? "לא נמצאו מוצרים בקטגוריה הזו - אפשר להסיר את הסינון או להוסיף מוצר חדש."
-              : "עדיין אין מוצרים בקטלוג - אפשר להוסיף את המוצר הראשון כאן."
-        }
+        description={emptyCatalogMessage(suppliers.length > 0, Boolean(category))}
         action={suppliers.length > 0 ? <CreateCatalogProductForm suppliers={suppliers} /> : undefined}
       />
     );
@@ -30,4 +24,10 @@ export async function CatalogList({ category, projectId }: { category?: string; 
       ))}
     </div>
   );
+}
+
+function emptyCatalogMessage(hasSuppliers: boolean, hasCategoryFilter: boolean): string {
+  if (!hasSuppliers) return "אין עדיין ספקים במאגר - יש להוסיף ספק לפני הוספת מוצרים.";
+  if (hasCategoryFilter) return "לא נמצאו מוצרים בקטגוריה הזו - אפשר להסיר את הסינון או להוסיף מוצר חדש.";
+  return "עדיין אין מוצרים בקטלוג - אפשר להוסיף את המוצר הראשון כאן.";
 }

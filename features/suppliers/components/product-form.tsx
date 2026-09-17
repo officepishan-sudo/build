@@ -3,10 +3,22 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { SupplierFormState } from "../actions";
-import type { Product } from "@prisma/client";
 
 type Action = (prevState: SupplierFormState, formData: FormData) => Promise<SupplierFormState>;
 type SupplierOption = { id: string; name: string };
+// שדות בלבד (בלי import type מ-@prisma/client) - נמנעים מייבוא Prisma ברכיב 'use client'.
+// priceMin/priceMax/warrantyMonths/deliveryLeadDays מגיעים כאן כמחרוזת (defaultValue של input),
+// הממיר קורה אצל הקורא (product-row.tsx) לפני ההעברה.
+type ProductFormValues = {
+  name: string;
+  category: string;
+  priceMin?: string | null;
+  priceMax?: string | null;
+  unit: string;
+  deliveryLeadDays?: string | null;
+  availability: string | null;
+  warrantyMonths?: string | null;
+};
 
 // טופס משותף למוצר - נצרך גם בעריכה/הוספה מתוך פרופיל ספק (supplierOptions לא מועבר,
 // ה-action מחייב supplierId) וגם מקטלוג גלובלי P17 (supplierOptions מוצג כ-select).
@@ -17,10 +29,7 @@ export function ProductForm({
   supplierOptions,
 }: {
   action: Action;
-  defaultValues?: Pick<
-    Product,
-    "name" | "category" | "priceMin" | "priceMax" | "unit" | "deliveryLeadDays" | "availability" | "warrantyMonths"
-  >;
+  defaultValues?: ProductFormValues;
   submitLabel: string;
   supplierOptions?: SupplierOption[];
 }) {

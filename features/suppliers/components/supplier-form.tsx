@@ -4,9 +4,10 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { SupplierFormState } from "../actions";
 import { SUPPLIER_CATEGORY_SUGGESTIONS } from "../constants";
-import type { Supplier } from "@prisma/client";
 
 type Action = (prevState: SupplierFormState, formData: FormData) => Promise<SupplierFormState>;
+// שדות בלבד (בלי import type מ-@prisma/client) - נמנעים מייבוא Prisma ברכיב 'use client'.
+type SupplierFormValues = { name: string; categories: string[]; area: string | null; terms: string | null; warrantyPolicy: string | null };
 
 // טופס משותף ליצירה ולעריכה של ספק - ה-action וברירות המחדל מגיעות מהקורא.
 export function SupplierForm({
@@ -15,7 +16,7 @@ export function SupplierForm({
   submitLabel,
 }: {
   action: Action;
-  defaultValues?: Pick<Supplier, "name" | "categories" | "area" | "terms" | "warrantyPolicy">;
+  defaultValues?: SupplierFormValues;
   submitLabel: string;
 }) {
   const [state, formAction] = useFormState(action, null);

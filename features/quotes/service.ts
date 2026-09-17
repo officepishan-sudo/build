@@ -61,12 +61,15 @@ async function attachRecipientNames(quotes: Quote[]) {
   ]);
   const profMap = new Map(professionals.map((p) => [p.id, p.name]));
   const supMap = new Map(suppliers.map((s) => [s.id, s.name]));
-  return quotes.map((q) => ({
-    ...q,
-    recipientName: q.professionalId
-      ? profMap.get(q.professionalId) ?? "לא ידוע"
-      : q.supplierId
-        ? supMap.get(q.supplierId) ?? "לא ידוע"
-        : "לא צויין",
-  }));
+  return quotes.map((q) => ({ ...q, recipientName: resolveRecipientName(q, profMap, supMap) }));
+}
+
+function resolveRecipientName(
+  quote: Pick<Quote, "professionalId" | "supplierId">,
+  profMap: Map<string, string>,
+  supMap: Map<string, string>,
+): string {
+  if (quote.professionalId) return profMap.get(quote.professionalId) ?? "לא ידוע";
+  if (quote.supplierId) return supMap.get(quote.supplierId) ?? "לא ידוע";
+  return "לא צויין";
 }

@@ -3,9 +3,17 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { updateCartItemAction, type CartFormState } from "../actions";
 import { Button } from "@/components/ui/button";
-import type { CartItem } from "@prisma/client";
 
 const initialState: CartFormState = null;
+
+// טיפוס מצומצם (לא CartItem מ-@prisma/client) - קובץ 'use client' לא מייבא Prisma.
+type EditableCartItem = {
+  id: string;
+  quantity: unknown;
+  unitPrice: unknown;
+  supplierId: string | null;
+  phaseId: string | null;
+};
 
 export function EditCartItemForm({
   projectId,
@@ -14,7 +22,7 @@ export function EditCartItemForm({
   phases,
 }: {
   projectId: string;
-  item: CartItem;
+  item: EditableCartItem;
   suppliers: { id: string; name: string }[];
   phases: { id: string; name: string }[];
 }) {

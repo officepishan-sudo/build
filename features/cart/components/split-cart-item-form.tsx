@@ -3,11 +3,13 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { splitCartItemAction, type CartFormState } from "../actions";
 import { Button } from "@/components/ui/button";
-import type { CartItem } from "@prisma/client";
 
 const initialState: CartFormState = null;
 
-export function SplitCartItemForm({ projectId, item }: { projectId: string; item: CartItem }) {
+// טיפוס מצומצם (לא CartItem מ-@prisma/client) - קובץ 'use client' לא מייבא Prisma.
+type SplittableCartItem = { id: string; quantity: unknown };
+
+export function SplitCartItemForm({ projectId, item }: { projectId: string; item: SplittableCartItem }) {
   const [state, formAction] = useFormState(splitCartItemAction.bind(null, projectId, item.id), initialState);
   const half = Math.max(1, Math.floor(Number(item.quantity) / 2));
 
