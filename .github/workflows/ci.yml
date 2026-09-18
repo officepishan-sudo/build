@@ -1,0 +1,83 @@
+# ci.yml - שער האיכות האוטומטי של המאגר.
+# רץ על כל push ועל כל pull request, ומריץ בדיוק את אותם סקריפטים שמריצים מקומית
+# (package.json): typecheck, lint, structure:gate, test, build. אין כאן פקודה
+# שלא קיימת ב-package.json - כדי ש"עבר ב-CI" ו"עבר אצלי" יישארו אותו דבר.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# push ל-branch שכבר יש לו ריצה פתוחה מבטל את הקודמת; ריצות על main/ברירת המחדל לא מבוטלות.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: typecheck · lint · structure · tests · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # הבדיקות רצות מול Postgres אמיתי (tests/helpers/test-db.ts עושה TRUNCATE אמיתי),
+    # ולכן שם ה-DB חייב להסתיים ב-_test - אחרת tests/setup.ts מסרב לרוץ.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: build_app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d build_app_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # פרטי החיבור הם של שירות ה-Postgres הזמני של הריצה בלבד - לא סוד, ולא מגיעים לשום סביבה אחרת.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/build_app_test?schema=public
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/build_app_test?schema=public
+      SESSION_SECRET: ci-only-session-secret-00000000000000000000
+      APP_PAUSED: "false"
+
+    steps:
+      - name: קוד
+        uses: actions/checkout@v4
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: התקנה
+        run: npm ci
+
+      # prisma generate חייב לקרות לפני typecheck/build/test - טיפוסי @prisma/client נוצרים ממנו.
+      - name: prisma client
+        run: npm run db:generate
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: eslint
+        run: npm run lint
+
+      - name: structure gate
+        run: npm run structure:gate
+
+      # מיגרציות על DB הבדיקות; migrate deploy מריץ רק מיגרציות קיימות ולא מייצר חדשות.
+      - name: מיגרציות ל-DB הבדיקות
+        run: npm run db:migrate:deploy
+
+      - name: בדיקות
+        run: npm test
+
+      - name: build
+        run: npm run build
